@@ -1,0 +1,204 @@
+name: Release desktop apps
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  create_release:
+    name: Create release draft
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.release.outputs.release_id }}
+      release_is_draft: ${{ steps.release.outputs.release_is_draft }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Verify tag matches app version
+        shell: bash
+        run: |
+          app_version="$(node -p "require('./package.json').version")"
+          expected_tag="v${app_version}"
+          if [[ "${GITHUB_REF_NAME}" != "${expected_tag}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package version ${app_version}."
+            echo "Use tag ${expected_tag}, or update package.json and Tauri versions first."
+            exit 1
+          fi
+
+      - name: Create or reuse release
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release create "${GITHUB_REF_NAME}" \
+              --draft \
+              --generate-notes \
+              --title "灵犀小屏屏 ${GITHUB_REF_NAME}"
+          fi
+
+          release_info="$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq ".[] | select(.tag_name == \"${GITHUB_REF_NAME}\") | [.id, .draft] | @tsv" \
+            | head -n 1)"
+          if [[ -z "${release_info}" ]]; then
+            echo "Could not find release for tag ${GITHUB_REF_NAME}."
+            exit 1
+          fi
+          release_id="${release_info%%$'\t'*}"
+          release_is_draft="${release_info##*$'\t'}"
+          echo "release_id=${release_id}" >> "${GITHUB_OUTPUT}"
+          echo "release_is_draft=${release_is_draft}" >> "${GITHUB_OUTPUT}"
+
+  build:
+    name: Build ${{ matrix.label }}
+    needs: create_release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: macOS arm64
+            platform: macos-latest
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+            build_args: --target aarch64-apple-darwin
+            sidecar_target: aarch64-apple-darwin
+            signing_identity: "-"
+          - label: macOS x86_64
+            platform: macos-latest
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+            build_args: --target x86_64-apple-darwin
+            sidecar_target: x86_64-apple-darwin
+            signing_identity: "-"
+          - label: Windows x86_64
+            platform: windows-latest
+            rust_targets: ""
+            build_args: ""
+            sidecar_target: ""
+            signing_identity: ""
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Prepare macOS sidecar
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p src-tauri/binaries
+          gh release download "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --pattern "lingxi-ai-monitor-aarch64-apple-darwin.gz" \
+            --dir src-tauri/binaries
+          compressed_path="src-tauri/binaries/lingxi-ai-monitor-aarch64-apple-darwin.gz"
+          source_path="src-tauri/binaries/lingxi-ai-monitor-aarch64-apple-darwin"
+          gzip -dc "${compressed_path}" > "${source_path}"
+          rm -f "${compressed_path}"
+          target_path="src-tauri/binaries/lingxi-ai-monitor-${{ matrix.sidecar_target }}"
+          if [[ "${source_path}" != "${target_path}" ]]; then
+            cp "${source_path}" "${target_path}"
+            chmod +x "${target_path}"
+          fi
+          chmod +x "${source_path}"
+
+      - name: Build and upload installers
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || matrix.signing_identity }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          releaseId: ${{ needs.create_release.outputs.release_id }}
+          tagName: ${{ github.ref_name }}
+          releaseDraft: ${{ needs.create_release.outputs.release_is_draft }}
+          args: ${{ matrix.build_args }}
+          retryAttempts: 3
+          releaseAssetNamePattern: Lingxi-Display-Studio-v[version]-[platform]-[arch][setup].[ext]
+          uploadWorkflowArtifacts: true
+          workflowArtifactNamePattern: Lingxi-Display-Studio-[platform]-[arch]-[bundle]
+
+  finalize_release:
+    name: Add checksums and publish
+    needs:
+      - create_release
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p release-assets
+          gh release download "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --pattern "Lingxi-Display-Studio-*" \
+            --dir release-assets
+
+      - name: Generate SHA-256 files
+        shell: bash
+        run: |
+          cd release-assets
+          for asset in *; do
+            if [[ -f "${asset}" && "${asset}" != *.sha256 ]]; then
+              sha256sum "${asset}" > "${asset}.sha256"
+            fi
+          done
+
+      - name: Upload checksums and publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            release-assets/*.sha256 \
+            --clobber
+
+          if [[ "${{ needs.create_release.outputs.release_is_draft }}" == "true" ]]; then
+            gh release edit "${GITHUB_REF_NAME}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --draft=false
+          fi
+
+          sidecar_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}" \
+            --jq '.assets[] | select(.name == "lingxi-ai-monitor-aarch64-apple-darwin.gz") | .id' | head -n 1)"
+          if [[ -n "${sidecar_id}" ]]; then
+            gh api --method DELETE \
+              "repos/${GITHUB_REPOSITORY}/releases/assets/${sidecar_id}"
+          fi

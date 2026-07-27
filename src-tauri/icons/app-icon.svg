@@ -1,0 +1,22 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="background" x1="154" y1="96" x2="870" y2="932" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14242C"/>
+      <stop offset="1" stop-color="#081116"/>
+    </linearGradient>
+    <linearGradient id="mint" x1="243" y1="223" x2="786" y2="817" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#69F0D6"/>
+      <stop offset="1" stop-color="#20A98F"/>
+    </linearGradient>
+    <filter id="shadow" x="164" y="163" width="696" height="718" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="28" stdDeviation="28" flood-color="#000000" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+  <rect x="56" y="56" width="912" height="912" rx="224" fill="url(#background)"/>
+  <rect x="70" y="70" width="884" height="884" rx="210" stroke="#3D525C" stroke-opacity="0.42" stroke-width="12"/>
+  <g filter="url(#shadow)">
+    <path d="M393 222H531L343 506L519 802H378L198 506L393 222Z" fill="url(#mint)"/>
+    <path d="M633 222H772L586 506L760 802H620L440 506L633 222Z" fill="url(#mint)" fill-opacity="0.76"/>
+  </g>
+  <circle cx="815" cy="208" r="28" fill="#71F2D8"/>
+</svg>

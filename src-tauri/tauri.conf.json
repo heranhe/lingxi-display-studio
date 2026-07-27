@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "灵犀小屏屏",
+  "version": "0.1.0",
+  "identifier": "app.lingxi.displaystudio",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "灵犀小屏屏 · Display Studio",
+        "width": 1180,
+        "height": 820,
+        "minWidth": 1024,
+        "minHeight": 720,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "third-party/CodexBar-LICENSE.txt"
+    ],
+    "macOS": {
+      "infoPlist": "Info.plist"
+    },
+    "shortDescription": "跨平台小屏内容控制与推送工具",
+    "longDescription": "通过局域网管理、预览并推送图片、AI 额度和系统监控内容到 Linx68 小屏。"
+  }
+}

@@ -1,0 +1,17 @@
+node_modules
+dist
+.DS_Store
+src-tauri/target
+*.log
+.vite
+.playwright-mcp
+.claude
+graphify-out
+src/graphify-out
+api-page-inspection.json
+*-verification.png
+src-tauri/binaries/lingxi-ai-monitor-x86_64-apple-darwin
+src-tauri/binaries/lingxi-ai-monitor-aarch64-apple-darwin
+src-tauri/binaries/lingxi-ai-monitor-universal-apple-darwin
+website
+github-pages-site
