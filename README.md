@@ -2,6 +2,10 @@
 
 一个使用 Tauri 2、Rust 和 React 构建的跨平台小屏控制工具，面向 Windows 与 macOS。
 
+<p align="center">
+  <img src="docs/images/lingxi-display-studio-hero.png" alt="灵犀小屏屏产品主视觉" width="900">
+</p>
+
 ## 当前能力
 
 - 以 `142 × 428` 精确比例预览小屏内容。
@@ -28,6 +32,14 @@ Tauri Rust Command
     ↓
 http://设备IP/image/upload
 ```
+
+## 界面预览
+
+主控制台用于管理预设、设备连接和实时推送；AI 额度页面集中展示 Codex / Claude 的额度与 Token 统计。
+
+| 预设库与系统监控 | AI 额度 |
+| --- | --- |
+| <img src="docs/images/lingxi-display-studio-dashboard.png" alt="预设库与系统监控界面" width="520"> | <img src="docs/images/lingxi-display-studio-ai-quota.png" alt="AI 额度界面" width="520"> |
 
 ## 前端开发
 
