@@ -80,7 +80,7 @@ jobs:
           - label: Windows x86_64
             platform: windows-latest
             rust_targets: ""
-            build_args: ""
+            build_args: --bundles nsis
             sidecar_target: ""
             signing_identity: ""
 
@@ -136,12 +136,7 @@ jobs:
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || matrix.signing_identity }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ matrix.signing_identity }}
         with:
           releaseId: ${{ needs.create_release.outputs.release_id }}
           tagName: ${{ github.ref_name }}
