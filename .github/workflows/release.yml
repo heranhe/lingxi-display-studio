@@ -124,7 +124,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p src-tauri/binaries
-          gh release download "${GITHUB_REF_NAME}" \
+          gh release download "sidecar-v1" \
             --repo "${GITHUB_REPOSITORY}" \
             --pattern "lingxi-ai-monitor-aarch64-apple-darwin.gz" \
             --dir src-tauri/binaries
@@ -224,11 +224,4 @@ jobs:
             gh release edit "${GITHUB_REF_NAME}" \
               --repo "${GITHUB_REPOSITORY}" \
               --draft=false
-          fi
-
-          sidecar_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}" \
-            --jq '.assets[] | select(.name == "lingxi-ai-monitor-aarch64-apple-darwin.gz") | .id' | head -n 1)"
-          if [[ -n "${sidecar_id}" ]]; then
-            gh api --method DELETE \
-              "repos/${GITHUB_REPOSITORY}/releases/assets/${sidecar_id}"
           fi

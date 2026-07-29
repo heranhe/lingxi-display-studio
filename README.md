@@ -84,11 +84,11 @@ macOS 构建会把 `src-tauri/binaries/lingxi-ai-monitor-*` 作为 Tauri sidecar
 - Windows（`x86_64`）NSIS 安装包
 - 每个安装包对应的 SHA-256 校验文件
 
-例如当前应用版本为 `0.1.1`：
+例如当前应用版本为 `0.1.2`：
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 工作流会先创建 Release 草稿，只有 Windows 与两种 macOS 架构全部构建成功后才会公开。
