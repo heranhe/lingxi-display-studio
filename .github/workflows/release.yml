@@ -46,9 +46,16 @@ jobs:
               --title "灵犀小屏屏 ${GITHUB_REF_NAME}"
           fi
 
-          release_info="$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
-            --jq ".[] | select(.tag_name == \"${GITHUB_REF_NAME}\") | [.id, .draft] | @tsv" \
-            | head -n 1)"
+          release_info=""
+          for attempt in {1..10}; do
+            if release_info="$(gh release view "${GITHUB_REF_NAME}" \
+              --json databaseId,isDraft \
+              --jq '[.databaseId, .isDraft] | @tsv' 2>/dev/null)"; then
+              break
+            fi
+            echo "Release metadata is not visible yet (attempt ${attempt}/10); retrying..."
+            sleep 2
+          done
           if [[ -z "${release_info}" ]]; then
             echo "Could not find release for tag ${GITHUB_REF_NAME}."
             exit 1
