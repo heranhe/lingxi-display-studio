@@ -248,7 +248,7 @@ function useAiState() {
 const DEFAULT_DEVICE = {
   id: "linx68-default",
   name: "Linx68",
-  ip: "192.168.6.120",
+  ip: "",
 };
 
 function createDeviceId() {
@@ -1926,7 +1926,7 @@ function SettingsDialog({
   // 就地校验。原来任何字符串都能存进 localStorage，只有一条转瞬即逝的
   // toast 提示出错，脏值却留了下来。
   const ipValid = IPV4_PATTERN.test(trimmedIp);
-  const ipError = trimmedIp && !ipValid ? "请输入形如 192.168.6.120 的 IPv4 地址" : "";
+  const ipError = trimmedIp && !ipValid ? "请输入有效的 IPv4 地址，例如 192.168.1.120" : "";
 
   useEffect(() => {
     setSelectedId(device.id);
@@ -2000,7 +2000,7 @@ function SettingsDialog({
           onKeyDown={(event) => {
             if (event.key === "Enter") save();
           }}
-          placeholder="192.168.6.120"
+          placeholder="例如 192.168.1.120"
           value={draftIp}
         />
         {ipError ? (
@@ -2206,7 +2206,6 @@ export default function App() {
     selectedPresetId,
   });
   const autoPushInFlightRef = useRef(false);
-  const initialDeviceCheckDoneRef = useRef(false);
 
   useEffect(() => {
     setDeviceStatus({
@@ -2348,14 +2347,6 @@ export default function App() {
     },
     [device.ip, showToast],
   );
-
-  // 首次启动沿用静默探测；之后切换设备或修改 IP 时，不再绕过
-  // “图像 API”连接前确认弹窗直接发起检测。
-  useEffect(() => {
-    if (initialDeviceCheckDoneRef.current) return;
-    initialDeviceCheckDoneRef.current = true;
-    handleCheckDevice(undefined, { silent: true });
-  }, [handleCheckDevice]);
 
   const handleRequestDeviceConnection = useCallback(
     (overrideIp) => {
