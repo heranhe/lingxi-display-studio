@@ -1745,6 +1745,11 @@ const FOCUSABLE_SELECTOR =
 
 function Modal({ children, className = "", labelId, onClose }) {
   const modalRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const node = modalRef.current;
@@ -1753,7 +1758,7 @@ function Modal({ children, className = "", labelId, onClose }) {
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab" || !node) return;
@@ -1779,7 +1784,7 @@ function Modal({ children, className = "", labelId, onClose }) {
       // 关闭后把焦点还给触发弹窗的那个按钮，否则焦点会掉回 body
       if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
