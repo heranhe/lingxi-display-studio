@@ -147,6 +147,34 @@ jobs:
           uploadWorkflowArtifacts: true
           workflowArtifactNamePattern: Lingxi-Display-Studio-[platform]-[arch]-[bundle]
 
+      - name: Smoke test Windows executable
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $appPath = "src-tauri/target/release/lingxi-display-studio.exe"
+          $logPath = Join-Path $env:LOCALAPPDATA "Lingxi Display Studio/startup-error.log"
+          if (-not (Test-Path $appPath)) {
+            throw "Windows executable was not produced at $appPath"
+          }
+          if (Test-Path $logPath) {
+            Remove-Item $logPath -Force
+          }
+
+          $process = Start-Process -FilePath $appPath -PassThru
+          Start-Sleep -Seconds 10
+          $process.Refresh()
+          if (Test-Path $logPath) {
+            Write-Host "Startup error log:"
+            Get-Content $logPath
+            Stop-Process -Id $process.Id -ErrorAction SilentlyContinue
+            throw "Windows executable reported a startup failure"
+          }
+          if ($process.HasExited) {
+            throw "Windows executable exited during startup with code $($process.ExitCode)"
+          }
+
+          Stop-Process -Id $process.Id
+
   finalize_release:
     name: Add checksums and publish
     needs:

@@ -64,6 +64,11 @@ npm run tauri dev
 npm run tauri build
 ```
 
+Windows 发布包内置 WebView2 离线安装程序，可在未预装 WebView2 或无法联网的
+Windows 10 设备上完成运行环境部署。请分发 `*-setup.exe` 安装包，不要直接复制
+`target/release` 下的裸可执行文件。若应用仍在创建窗口前失败，会显示错误提示并将
+日志写入 `%LOCALAPPDATA%\Lingxi Display Studio\startup-error.log`。
+
 macOS 构建会把 `src-tauri/binaries/lingxi-ai-monitor-*` 作为 Tauri sidecar
 一并签名和打包。运行时优先使用内置采集核心；开发目录未准备 sidecar 时才会回退到
 系统中的 `codexbar`。采集过程只读本机 Codex / Claude 的已知配置与 JSONL 日志，
@@ -76,14 +81,14 @@ macOS 构建会把 `src-tauri/binaries/lingxi-ai-monitor-*` 作为 Tauri sidecar
 
 - macOS Apple Silicon（`arm64`）DMG
 - macOS Intel（`x86_64`）DMG
-- Windows（`x86_64`）MSI 与 NSIS 安装包
+- Windows（`x86_64`）NSIS 安装包
 - 每个安装包对应的 SHA-256 校验文件
 
-例如当前应用版本为 `0.1.0`：
+例如当前应用版本为 `0.1.1`：
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 工作流会先创建 Release 草稿，只有 Windows 与两种 macOS 架构全部构建成功后才会公开。

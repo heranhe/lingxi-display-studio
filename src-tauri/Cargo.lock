@@ -1696,7 +1696,7 @@ dependencies = [
 
 [[package]]
 name = "lingxi-display-studio"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "reqwest 0.12.28",
  "serde",
@@ -1704,6 +1704,7 @@ dependencies = [
  "sysinfo",
  "tauri",
  "tauri-build",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
