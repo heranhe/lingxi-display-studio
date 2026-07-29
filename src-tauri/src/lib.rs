@@ -601,7 +601,11 @@ pub fn run() {
                 sampled_at: Instant::now(),
             }),
             disks: Mutex::new(Disks::new_with_refreshed_list()),
-            components: Mutex::new(Components::new_with_refreshed_list()),
+            // Windows 的温度读取通过 WMI 初始化多线程 COM。若在 Tauri 创建窗口前
+            // 刷新 Components，会把 UI 主线程切到 MTA，随后 Tao 的 OleInitialize
+            // 因 RPC_E_CHANGED_MODE 直接终止启动。空集合不会碰 COM；首次系统监控
+            // 请求在异步命令线程调用 refresh 时再完成 WMI 初始化。
+            components: Mutex::new(Components::new()),
         })
         .invoke_handler(tauri::generate_handler![
             check_device,
